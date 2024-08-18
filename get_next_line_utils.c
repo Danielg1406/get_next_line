@@ -24,6 +24,8 @@ size_t	ft_strlen(const char *s)
 
 char	*ft_strchr(const char *s, int c)
 {
+	if (!s)
+		return (NULL);
 	while (*s)
 	{
 		if (*s == (char)c)
@@ -32,59 +34,60 @@ char	*ft_strchr(const char *s, int c)
 	}
 	if (*s == (char)c)
 		return ((char *)s);
-	return (0);
+	return (NULL);
 }
 
 char	*ft_strjoin(char const *s1, char const *s2)
 {
-	size_t	i;
 	size_t	len_s1;
 	size_t	len_s2;
+	size_t	i;
 	char	*join;
 
 	len_s1 = ft_strlen(s1);
 	len_s2 = ft_strlen(s2);
 	join = (char *)malloc((len_s1 + len_s2 + 1) * sizeof(char));
-	if (join == NULL)
+	if (!join)
 		return (NULL);
 	i = 0;
-	while (i <= len_s1)
+	while (i < len_s1)
 	{
 		join[i] = s1[i];
 		i++;
 	}
-	i = 0;
-	while (i <= len_s2)
+	while (i < len_s1 + len_s2)
 	{
-		join[i + len_s1] = s2[i];
+		join[i] = s2[i - len_s1];
 		i++;
 	}
-	join[len_s1 + len_s2 + 1] = '\0';
+	join[i] = '\0';
 	return (join);
 }
 
-char	*ft_strdup(const char *s1) {
+char	*ft_strdup(const char *s1)
+{
+	size_t	len;
+	size_t	i;
 	char	*dup;
-	size_t		len;
-	size_t		i;
 
 	len = ft_strlen(s1);
 	dup = (char *)malloc(len + 1);
 	if (!dup)
-		return NULL;
+		return (NULL);
 	i = 0;
-	while (i < len) {
+	while (i < len)
+	{
 		dup[i] = s1[i];
 		i++;
 	}
 	dup[i] = '\0';
-	return dup;
+	return (dup);
 }
 
 char	*ft_substr(char const *s, unsigned int start, size_t len)
 {
 	char	*sub;
-	size_t		i;
+	size_t	i;
 
 	if (!s)
 		return (NULL);
@@ -95,6 +98,7 @@ char	*ft_substr(char const *s, unsigned int start, size_t len)
 	sub = (char *)malloc(len + 1);
 	if (!sub)
 		return (NULL);
+	i = 0;
 	while (i < len && s[start + i])
 	{
 		sub[i] = s[start + i];
