@@ -1,57 +1,80 @@
 #include "get_next_line.h"
-#include <stdio.h>
+#include <fcntl.h>      
+#include <unistd.h>     
+#include <stdio.h>      
+#include <stdlib.h>     
 
-void	test_get_next_line(int fd)
+void test_file(const char *filename, int buffer_size)
 {
-	char	*line;
+    int     fd;
+    char    *line;
 
-	while ((line = get_next_line(fd)) != NULL)
-	{
-		printf("%s", line);
-		free(line);
-	}
+    printf("Testing file: %s with BUFFER_SIZE: %d\n", filename, buffer_size);
+    fd = open(filename, O_RDONLY);
+    if (fd == -1)
+    {
+        write(2, "Error opening file\n", 19);
+        return;
+    }
+    while ((line = get_next_line(fd)) != NULL)
+    {
+        printf("%s", line);
+        free(line);
+    }
+    if (line == NULL)
+        printf("\nNULL returned (end of file).\n");
+    close(fd);
 }
 
-void	test_with_buffer_size(int fd, int buffer_size)
+void test_stdin(int buffer_size)
 {
-	printf("Testing with BUFFER_SIZE = %d\n", buffer_size);
-#undef BUFFER_SIZE
-#define BUFFER_SIZE buffer_size
-	test_get_next_line(fd);
-	lseek(fd, 0, SEEK_SET); // Reset file descriptor for next test
+    char    *line;
+
+    printf("Testing stdin with BUFFER_SIZE: %d. Type input (or Press CTRL + D to exit):\n", buffer_size);
+    while ((line = get_next_line(0)) != NULL)
+    {
+        printf("%s", line);
+        free(line);
+    }
+    if (line == NULL)
+        printf("\nNULL returned (end of input).\n");
 }
 
-int	main(void)
+int main(void)
 {
-	int fd;
+    // Test with different BUFFER_SIZE values
+    int buffer_sizes[] = {1, 42, 1024, 1000000};
+    size_t i;
 
-	// Test with a file
-	fd = open("test.txt", O_RDONLY);
-	if (fd == -1)
-	{
-		write(2, "Error opening file", 19);
-		return (1);
-	}
+    // Test files for each buffer size
+    for (i = 0; i < sizeof(buffer_sizes) / sizeof(int); i++)
+    {
+        printf("\n==============================================\n");
+        printf("\nRunning tests with BUFFER_SIZE = %d\n", buffer_sizes[i]);
+        printf("\n==============================================\n");
 
-	// Large BUFFER_SIZE (>1024)
-	test_with_buffer_size(fd, 2048);
+        // Test with various files
+        test_file("tests/empty.txt", buffer_sizes[i]);  // Empty file
+				printf("\n==============================================\n");
+        test_file("tests/one_char.txt", buffer_sizes[i]);  // Single character
+				printf("\n==============================================\n");
+        test_file("tests/one_line_no_nl.txt", buffer_sizes[i]);  // Single line, no newline
+				printf("\n==============================================\n");
+        test_file("tests/only_nl.txt", buffer_sizes[i]);  // Only newline
+				printf("\n==============================================\n");
+        test_file("tests/multiple_nl.txt", buffer_sizes[i]);  // Multiple newlines
+				printf("\n==============================================\n");
+        test_file("tests/multiple_lines_short.txt", buffer_sizes[i]);  // Multiple short lines
+				printf("\n==============================================\n");
+        test_file("tests/giant_line.txt", buffer_sizes[i]);  // Single long line (2k+ characters)
+				printf("\n==============================================\n");
+        test_file("tests/multiple_lines_long.txt", buffer_sizes[i]);  // Multiple long lines (2k+ characters)
+    }
 
-	// Small BUFFER_SIZE (< 8, and 1)
-	test_with_buffer_size(fd, 1);
-	test_with_buffer_size(fd, 4);
-
-	// BUFFER_SIZE exactly the length of the line to read
-	test_with_buffer_size(fd, 10); // Assuming a line of 10 characters
-
-	// 1 byte variant (+/-) between the line and the BUFFER_SIZE
-	test_with_buffer_size(fd, 9);
-	test_with_buffer_size(fd, 11);
-
-	close(fd);
-
-	// Test reading from stdin
-	printf("Testing with stdin (type some lines and press Ctrl+D to end):\n");
-	test_get_next_line(STDIN_FILENO);
-
-	return (0);
+    // Test reading from stdin
+		 printf("\n==============================================\n");
+        printf("Test reading from stdinn");
+        printf("\n==============================================\n");
+    test_stdin(buffer_sizes[0]); // Test reading from stdin with a small BUFFER_SIZE
+    return (0);
 }
